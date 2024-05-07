@@ -220,7 +220,7 @@ export const customerOrderPaymentVerification = CatchAsyncError(async(req:Reques
 
       }
       await order?.save();
-    res.redirect(`http://localhost:5174/paymentsuccess?reference=${razorpay_payment_id}&order=${order}`)
+    res.redirect(`https://schedule-message-6ed2c.web.app/Bill?reference=${razorpay_payment_id}&order=${order}`)
     return
 
     }else{
