@@ -19,6 +19,7 @@ export interface Item {
     item_price: number;
     item_instructions?: string;
     item_category: string;
+    quantity:number;
 }
 
 
@@ -54,7 +55,8 @@ const orderSchema = new mongoose.Schema({
             item_name: String,
             item_price: Number,
             item_instructions: String,
-            item_category: String
+            item_category: String,
+            quantity: Number
        }
     ],
     orderId: {

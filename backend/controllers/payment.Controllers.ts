@@ -6,7 +6,6 @@ import instance from "../utils/razorpay.instance";
 import instance2 from "../utils/customer.razorpay.instance";
 import crypto from "crypto"
 import { Payment } from "../db/Schemas/payment.model";
-import { OrderPayment } from "../db/Schemas/order.payment";
 import Store from "../db/Schemas/store.model";
 import { Order } from "../db/Schemas/order.model";
 require('dotenv').config()
