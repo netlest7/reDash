@@ -16,6 +16,7 @@ export const createOder = CatchAsyncError(async(req: Request,res: Response,next:
     if(!store){
         return next(new ErrorHandler("QR is not valid. Please contact the shop owner.",400));
     }
+        // TODO; :payment
 
     if(tableNo && order_cust_name && order_cust_phone){
 
@@ -28,7 +29,6 @@ export const createOder = CatchAsyncError(async(req: Request,res: Response,next:
             order_items
         })
 
-        // TODO; :payment
         res.status(200).json({
             success: true,
             message: "Order Successfull",
@@ -67,7 +67,7 @@ export const orderStatus = CatchAsyncError(async(req: Request,res: Response,next
 
 export const getAllOrders = CatchAsyncError(async(req: Request,res: Response,next: NextFunction) => {
     const storeId = req.params.storeId
-    const orders = await Order.find({store_id:storeId,order_status: "pending"})
+    const orders = await Order.find({store_id:storeId,order_status: "pending",paymentStatus: true})
 console.log(orders,"from backedn ra lucha");
 
         res.status(200).json({

@@ -10,6 +10,8 @@ export interface IOrders extends Document {
     order_status: string;
     order_type: string;
     order_items: Array<{item:Item}>;
+    orderId: string;
+    paymentStatus: boolean
 }
 
 export interface Item {
@@ -54,7 +56,15 @@ const orderSchema = new mongoose.Schema({
             item_instructions: String,
             item_category: String
        }
-    ]
+    ],
+    orderId: {
+        type: String,
+        default: null
+    },
+    paymentStatus:{
+        type: Boolean,
+        default: false
+    }
 })
 
 export const Order = mongoose.model<IOrders>("Order",orderSchema);

@@ -3,8 +3,12 @@ import { CatchAsyncError } from "../middleware/CatchAsyncError";
 import Owner from "../db/Schemas/ownerSchema";
 import ErrorHandler from "../utils/ErrorHandler";
 import instance from "../utils/razorpay.instance";
+import instance2 from "../utils/customer.razorpay.instance";
 import crypto from "crypto"
 import { Payment } from "../db/Schemas/payment.model";
+import { OrderPayment } from "../db/Schemas/order.payment";
+import Store from "../db/Schemas/store.model";
+import { Order } from "../db/Schemas/order.model";
 require('dotenv').config()
 
 // create subscription
@@ -54,9 +58,6 @@ interface IPaymentVerificationInput{
 }
 
 export const paymentVerification = CatchAsyncError(async(req:Request,res:Response,next:NextFunction)=>{
-    console.log("Hello");
-    const data = req.body;
-    console.log(data,"geetika");
     
     const {razorpay_payment_id,razorpay_subscription_id,razorpay_signature} = req.body as IPaymentVerificationInput
     
@@ -152,4 +153,93 @@ export const cancelSubscription = CatchAsyncError(async(req:Request,res:Response
         message: refund ? "Subscription cancelled , You will recive full refund within 7 days." : "Subscription cancelled , no refund initiated as subscription was cancelled after 7 days."
     })
 
+})
+
+
+
+
+
+//  customer payment
+export const customerOrderPayment = CatchAsyncError(async(req:Request,res:Response,next:NextFunction)=>{
+
+        const {tableNo,order_cust_name,order_cust_phone,order_type,order_items,totalamount} = req.body;
+    
+        const store = await Store.findById(req.params.storeId);
+
+        
+    
+        if(!store){
+            return next(new ErrorHandler("QR is not valid. Please contact the shop owner.",400));
+        }
+
+    
+        if(tableNo && order_cust_name && order_cust_phone){
+            
+        const options = {
+                amount: Number(totalamount * 100),
+                currency: "INR",
+                        }
+
+        const orderRequest = await instance2.orders.create(options)
+    
+        const order = await Order.create({
+                table_number:tableNo,
+                order_cust_name,
+                order_cust_phone,
+                store_id: req.params.storeId,
+                order_type,
+                order_items,
+                orderId: orderRequest.id
+        })
+    
+
+
+    console.log(orderRequest,"yes");
+
+    res.status(200).json({
+        success: true,
+        order,
+        orderRequest
+    })
+}
+})
+
+export const customerOrderPaymentVerification = CatchAsyncError(async(req:Request,res:Response,next:NextFunction)=>{
+    const {razorpay_order_id,razorpay_payment_id,razorpay_signature} = req.body
+
+    const body = razorpay_order_id + "|" + razorpay_payment_id
+    var expectedSignature = crypto.createHmac('sha256',process.env.RAZORPAY_API_SECRET as string)
+        .update(body.toString()).digest('hex');
+
+    if(expectedSignature === razorpay_signature){
+
+      const order = await Order.findOne({orderId: razorpay_order_id})
+
+      if(order){
+        order.paymentStatus = !order.paymentStatus
+
+      }
+      await order?.save();
+    
+      res.status(200).json({
+        success:true,
+        order
+    })
+    
+    res.redirect(`http://localhost:5174/paymentsuccess?reference=${razorpay_payment_id}`)
+    return
+
+    }else{
+
+        const order = await Order.deleteOne({orderId: razorpay_order_id})
+
+        res.status(200).json({
+            success: false,
+            message: "Something went wrong"
+        })
+       res.redirect(`http://localhost:5174/paymentfail`)
+       return
+
+    }
+    
 })
