@@ -225,12 +225,11 @@ export const customerOrderPaymentVerification = CatchAsyncError(async(req:Reques
     }else{
 
         const order = await Order.deleteOne({orderId: razorpay_order_id})
-
-        res.status(200).json({
-            success: false,
-            message: "Something went wrong"
-        })
-       res.redirect(`http://localhost:5174/paymentfail`)
+       res.redirect(`http://localhost:5174/paymentfail`);
+       res.status(200).json({
+        success: false,
+        message: "Something went wrong"
+    })
        return
 
     }

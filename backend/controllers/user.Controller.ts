@@ -20,25 +20,35 @@ interface IOwnerRegistration {
 
 export const signUpUser = CatchAsyncError(async(req:Request , res: Response , next: NextFunction) =>{
     
-    const {owner_name,owner_email,owner_password} = req.body
+    try {
+        const {owner_name,owner_email,owner_password} = req.body
 
+    
     const ownerAlreadyExists = await Owner.findOne({owner_email});
 
     if(ownerAlreadyExists){
         return next(new ErrorHandler("User alredy exists",400))
 
     }
+
+    console.log("Owner check");
+    
     const owner: IOwnerRegistration ={
         owner_name ,
         owner_email,
         owner_password,
     } 
 
+    console.log(owner,"lksdflk");
+    
+
     
     const activationToken = createActivationToken(owner);
 
     const activationCode = activationToken.activationCode
 
+    console.log("done acti code token");
+    
     const data = {
         user: {
             name:owner.owner_name
@@ -46,9 +56,9 @@ export const signUpUser = CatchAsyncError(async(req:Request , res: Response , ne
         activationCode
 
     }
+    
 
     const html = await ejs.renderFile(path.join(__dirname,"../mails/activation-mail.ejs"),data)
-
     try{
         await sendMail({
             email: owner.owner_email,
@@ -65,6 +75,11 @@ export const signUpUser = CatchAsyncError(async(req:Request , res: Response , ne
             activationToken: activationToken.token
         })
     }catch(error:any){
+        console.log("bc lun");
+        
+        return next(new ErrorHandler(error.message,400))
+    }
+    } catch (error:any) {
         return next(new ErrorHandler(error.message,400))
     }
 })
@@ -124,7 +139,7 @@ export const activateOwner = CatchAsyncError(async(req:Request ,res: Response ,n
     
     res.status(201).json({
         success:true,
-        user
+        message: "User Created Successfully"
     })
 
     } catch (error:any) {
@@ -179,8 +194,6 @@ export const loginOwner = CatchAsyncError(async(req: Request , res: Response , n
 export const logoutOwner = CatchAsyncError(async(req: Request , res: Response , next: NextFunction) =>{
 
     try {
-        console.log("hello ji");
-        
         res.cookie("access_token","",{maxAge:1});
         res.cookie("refresh_token","",{maxAge:1});
         console.log(req.owner?._id);
@@ -415,3 +428,47 @@ export const updatePassword = CatchAsyncError(async(req: Request,res: Response,n
         return next(new ErrorHandler(error.message,400))
     }
 })
+
+
+
+
+// update Onwer
+export const updateOwner = CatchAsyncError(async(req: Request , res: Response , next: NextFunction)=>{
+    
+
+
+    const {owner_name,owner_email,owner_phoneNumber,owner_aadharCard,owner_paymentDetails} = req.body
+ 
+    const owner = await Owner.findById({_id:req.owner?._id});
+ 
+     if(!owner){
+         return next(new ErrorHandler("User not login",400))
+     }
+ 
+ 
+     if(owner_email){
+        
+         owner.owner_email = owner_email
+     }
+     if(owner_name){
+         owner.owner_name = owner_name
+     }
+     if(owner_phoneNumber){
+         owner.owner_phoneNumber = owner_phoneNumber
+ 
+     }
+     if( owner_aadharCard ){
+         owner.owner_aadharCard
+        
+     }
+     if(owner_paymentDetails){
+         owner.owner_paymentDetails = owner_paymentDetails
+     }
+ 
+     await owner?.save();
+     res.status(200).json({
+        success: true,
+        message: "Updated Successfull",
+        owner
+     })
+ })

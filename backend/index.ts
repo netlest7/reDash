@@ -8,6 +8,7 @@ import { ErrorMiddleware } from "./middleware/Error";
 import storeRouter from "./routes/store.Routes";
 import ordersRouter from "./routes/order.Routes";
 import paymentRouter from "./routes/payment.Routes";
+import cloudinary from "cloudinary";
 dotenv.config()
 
 
@@ -15,13 +16,23 @@ async function startServer() {
     const app = express();
 
 
-app.use(express.json());
+app.use(express.json({
+    limit:"90mb"
+}));
 app.use(cookieparser())
 app.use(cors({
-    origin: ['http://localhost:5173','http://localhost:5174','http://localhost:5175','https://schedule-message-6ed2c.web.app'],
+    origin: ['http://localhost:5173','http://localhost:5174','http://localhost:5175','https://schedule-message-6ed2c.web.app',"http://localhost:5173/profile"],
     credentials: true
 }))
 app.use(urlencoded({extended:true}))
+
+// cloudinary
+cloudinary.v2.config({
+    cloud_name:process.env.CLOUDINARY_NAME,
+    api_key:process.env.CLOUDINARY_API_KEY ,
+    api_secret:process.env.CLOUDINARY_SECRET
+})
+
 // routes
 app.use("/api/v1",userRouter);
 app.use("/api/v1",storeRouter);

@@ -3,7 +3,7 @@ import { CatchAsyncError } from "../middleware/CatchAsyncError";
 import Owner from "../db/Schemas/ownerSchema";
 import ErrorHandler from "../utils/ErrorHandler";
 import Store, { IStore, Item } from "../db/Schemas/store.model";
-
+import cloudinary from "cloudinary"
 
 // creating Store
 
@@ -13,23 +13,33 @@ interface IOStore{
     store_openTime : number
     store_closeTime : number
     store_acceptingOrder : boolean
-    store_logo : {
-        public_id: string,
-        url: string
-    }
+    store_logo_user : string
 }
 
 export const createStore = CatchAsyncError(async(req: Request,res: Response,next: NextFunction) => {
 
     const id = req.owner?._id
-    const {store_name,store_NoOfTables,store_openTime,store_closeTime,store_logo} = req.body as IOStore
+    const {store_name,store_NoOfTables,store_openTime,store_closeTime,store_logo_user} = req.body as IOStore
 
+    
+
+    
     const owner = await Owner.findById({_id: id});
 
     if(!owner){
         return next(new ErrorHandler("Please login to access these resource" ,400))
     }
 
+    
+    // upload store logo to cloudinary 
+    const myCloud = await cloudinary.v2.uploader.upload(store_logo_user,{
+        folder: "store_logos",
+        width: 150,
+        crop:"scale"
+    })
+
+
+    
     // creating Store....
     const store = await Store.create({
         store_ownerId: id,
@@ -37,7 +47,10 @@ export const createStore = CatchAsyncError(async(req: Request,res: Response,next
         store_NoOfTables,
         store_openTime,
         store_closeTime,
-        store_logo
+        store_logo: {
+            public_id: myCloud.public_id,
+            url: myCloud.secure_url,
+        }
     })
 
     owner.owner_storeId.push({storeId: store._id});
