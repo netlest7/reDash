@@ -183,6 +183,7 @@ export const loginOwner = CatchAsyncError(async(req: Request , res: Response , n
     }
    
    sendToken(owner,200,res)
+       console.log("logged in")
    }catch(error:any){
     return next(new ErrorHandler(error.message,400))
 }
